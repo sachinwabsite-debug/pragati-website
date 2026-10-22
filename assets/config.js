@@ -9,5 +9,5 @@ window.CONFIG = {
   // Paste your Google Sheet "Publish to web" CSV link between the quotes to turn on live offers.
   offersSheetCsv: "",
   // Paste your Web3Forms access key between the quotes to turn on the enquiry form.
-  formAccessKey: ""
+  formAccessKey: "73b68b47-6c71-401c-b683-d4a869493f6c"
 };
