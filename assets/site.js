@@ -28,16 +28,31 @@ function csv(t){var r=[],row=[],c="",q=false,i,ch;for(i=0;i<t.length;i++){ch=t[i
  else if(ch=='"')q=true;else if(ch==","){row.push(c);c=""}
  else if(ch=="\n"||ch=="\r"){if(ch=="\r"&&t[i+1]=="\n")i++;row.push(c);r.push(row);row=[];c=""}else c+=ch}
  if(c||row.length){row.push(c);r.push(row)}return r}
+function pad(n){return n<10?"0"+n:""+n}
+function nd(s){s=(s||"").trim();var m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(m)return m[1]+"-"+pad(+m[2])+"-"+pad(+m[3]);
+ m=s.match(/^(\d{1,2})[-\/.]?(\d{1,2})[-\/.]?(\d{4})$/);if(m)return m[3]+"-"+pad(+m[2])+"-"+pad(+m[1]);return ""}
+function fmt(i){return i.slice(8)+"-"+i.slice(5,7)+"-"+i.slice(0,4)}
+function lb(src,alt){var o=el("div","lb"),bar=el("div","lbbar"),sc=el("div","lbscroll"),im=el("img"),z=1,fit=0;
+ o.setAttribute("role","dialog");o.setAttribute("aria-label",alt);im.src=src;im.alt=alt;
+ function set(v){z=Math.max(1,Math.min(5,v));if(z==1){im.style.width="";im.style.maxWidth="100%";im.style.maxHeight="calc(100vh - 90px)"}
+  else{if(!fit)fit=im.getBoundingClientRect().width;im.style.maxWidth="none";im.style.maxHeight="none";im.style.width=(fit*z)+"px"}}
+ function b(t,f,l){var x=el("button","",t);x.type="button";x.setAttribute("aria-label",l);x.onclick=f;bar.appendChild(x)}
+ function close(){document.body.removeChild(o);document.removeEventListener("keydown",key);document.body.style.overflow=""}
+ function key(e){if(e.key=="Escape")close();if(e.key=="+"||e.key=="=")set(z+.5);if(e.key=="-")set(z-.5)}
+ b("+",function(){set(z+.5)},"Zoom in");b("\u2212",function(){set(z-.5)},"Zoom out");b("Reset",function(){set(1)},"Reset zoom");
+ var a=el("a","","Open full size");a.href=src;a.target="_blank";a.rel="noopener";bar.appendChild(a);b("Close",close,"Close");
+ o.onclick=function(e){if(e.target==o||e.target==sc)close()};im.onload=function(){fit=im.getBoundingClientRect().width};
+ sc.appendChild(im);o.appendChild(bar);o.appendChild(sc);document.addEventListener("keydown",key);document.body.style.overflow="hidden";document.body.appendChild(o);set(1)}
 function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x)e.textContent=x;return e}
 function show(text){var rows=csv(text).filter(function(r){return r.join("").trim()});rows.shift();
- var today=new Date().toISOString().slice(0,10),L=[];
- rows.forEach(function(r){var s=(r[5]||"").trim(),e=(r[6]||"").trim(),st=(e&&e<today)?"expired":(s&&s>today)?"upcoming":"active";
-  if(st!="expired")L.push({r:r,s:s,e:e,st:st})});
+ var d=new Date(),today=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()),L=[];
+ rows.forEach(function(r){var s=nd(r[5]),e=nd(r[6]),st=(e&&e<today)?"expired":(s&&s>today)?"upcoming":"active";
+  if(st!="expired")L.push({r:r,s:s?fmt(s):(r[5]||"").trim(),e:e?fmt(e):(r[6]||"").trim(),st:st})});
  L.sort(function(a,b){return (a.st==b.st)?0:a.st=="active"?-1:1});
  box.textContent="";
  if(!L.length){box.appendChild(el("p","note","No offers are running right now. Please contact us for current wholesale rates."));return}
  L.forEach(function(o){var r=o.r,a=el("article","offer "+((r[8]||"general").trim().toLowerCase()));
-  var p=el("div","pic");if(r[2]&&r[2].trim()){var im=el("img");im.src=r[2].trim();im.alt=r[0]+" banner";p.appendChild(im)}else p.textContent=r[0];
+  var p=el("div","pic");if(r[2]&&r[2].trim()){var src=r[2].trim(),bt=el("button");bt.type="button";bt.setAttribute("aria-label","Enlarge "+r[0]+" banner");var im=el("img");im.src=src;im.alt=r[0]+" banner";im.loading="lazy";bt.appendChild(im);bt.onclick=function(){lb(src,r[0]+" banner")};p.appendChild(bt);p.appendChild(el("span","zm","Tap image to enlarge and zoom"))}else p.textContent=r[0];
   var t=el("div","txt"),g=el("span","tag"+(o.st=="upcoming"?" up":""),o.st=="active"?"ACTIVE":"UPCOMING");
   t.appendChild(g);t.appendChild(el("h2","",r[0]));t.appendChild(el("h3","",r[1]));t.appendChild(el("p","",r[3]));
   if(r[4])t.appendChild(el("p","","Applies to: "+r[4]));
